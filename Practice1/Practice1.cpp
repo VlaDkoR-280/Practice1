@@ -55,25 +55,38 @@ public:
     void Draw() {
         indexSplits = (int*)calloc(5, sizeof(int*));
         DrawStartLine();
-        indexSplits[0] = 0; indexSplits[1] = 16; indexSplits[2] = 32; indexSplits[3] = 63; indexSplits[4] = 89; indexSplits[5] = 105;
-        DrawOnEndText((char*)"TEst", this->width / 2 - 1); 
-        DrawOnCenterText((char*)"TEst2", this->width / 2 - 1);
-        cout << "|" << endl; DrawNullEndLine();
+        DrawNullLine(this->lines[0]);
 
     }
 
 private:
     int* indexSplits;
+    void DrawChars(char ch, int length) {
+        for (int i = 0; i < length; i++); cout << ch;
+    }
     void DrawNullLine() {
         cout << '|';
-        for (int i = 0; i < width - 2; i++) cout << " ";
+        DrawChars(' ', width - 2);
         cout << '|' << endl;
     }
 
-    void DrawNullLine() {
+
+    void DrawNullLine(TableCreater::LineData lineData) {
         cout << '|';
-        for (int i = 0; i < this->width - 2; i++) cout << " ";
-        cout << '|' << endl;
+        int indexEl = 0;
+        //lineData->items;
+        for (int i = 0; i < *lineData.sizeItems; i++) {
+            DrawChars(' ', lineData.items[i].widthItem); cout << '|';
+        }
+    }
+
+    void DrawNullEndLine(TableCreater::LineData* lineData) {
+        cout << '|';
+        int indexEl = 0;
+        //lineData->items;
+        for (int i = 0; i < *lineData->sizeItems; i++) {
+            DrawChars('_', lineData->items[i].widthItem); cout << '|';
+        }
     }
 
     void DrawNullEndLine() {
