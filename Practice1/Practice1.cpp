@@ -12,10 +12,7 @@ struct Transport {
     short year;
 };
 
-struct Data {
-    char* data1;
-    int width1;
-};
+
 
 class TableCreater {
 public:
@@ -25,7 +22,7 @@ public:
         int* sizeItems;
         struct ItemData {
             char* data;
-            int* widthItem;
+            int widthItem;
         }* items;
     }* lines;
 
@@ -46,16 +43,6 @@ public:
         return;
     }
 
-    void setElementsToLine(int indexLine, Data* itemsData, int sizeItems) {
-        (this->lines[indexLine].sizeItems) = new int(sizeItems);
-        this->lines[indexLine].items = new LineData::ItemData[sizeItems];
-        LineData::ItemData* ptr = this->lines[indexLine].items;
-        for (int i = 0; i < sizeItems; i++) {
-            ((ptr + i)->data) = ((itemsData + i)->data1);
-            ((ptr + i)->widthItem) = new int((itemsData + i)->width1);
-        }
-        return;
-    }
 
 
     const char* getData(int line_i, int colum_i) {
@@ -64,34 +51,105 @@ public:
         return item[colum_i].data;
     }
 
+
+    void Draw() {
+        indexSplits = (int*)calloc(5, sizeof(int*));
+        DrawStartLine();
+        indexSplits[0] = 0; indexSplits[1] = 16; indexSplits[2] = 32; indexSplits[3] = 63; indexSplits[4] = 89; indexSplits[5] = 105;
+        DrawOnEndText((char*)"TEst", this->width / 2 - 1); 
+        DrawOnCenterText((char*)"TEst2", this->width / 2 - 1);
+        cout << "|" << endl; DrawNullEndLine();
+
+    }
+
+private:
+    int* indexSplits;
+    void DrawNullLine() {
+        cout << '|';
+        for (int i = 0; i < width - 2; i++) cout << " ";
+        cout << '|' << endl;
+    }
+
+    void DrawNullLine() {
+        cout << '|';
+        for (int i = 0; i < this->width - 2; i++) cout << " ";
+        cout << '|' << endl;
+    }
+
+    void DrawNullEndLine() {
+        cout << '|';
+        for (int i = 0; i < this->width - 2; i++) cout << "_";
+        cout << '|' << endl;
+    }
+    void DrawStartLine() {
+        cout.width(this->width + 1); cout.fill('_'); cout << "\n";
+    }
+    void DrawOnCenterText(char* text, int width) {
+        DrawNullLine();
+        cout << '|';
+        int startIndexText = (width - strlen(text)) / 2;
+        for (int i = 0; i < startIndexText; i++) {
+            cout << " ";
+        }
+        for (int i = startIndexText; i < startIndexText + strlen(text); i++) {
+            cout << text[i - startIndexText];
+        }
+        for (int i = startIndexText + strlen(text); i < this->width - 2; i++) {
+            cout << " ";
+        }
+        
+    }
+    void DrawOnStartText(char* text, int width) {
+        DrawNullLine();
+        cout << "| ";
+        for (int i = 0; i < strlen(text); i++) {
+            cout << text[i];
+        }
+        for (int i = strlen(text); i < width - 2; i++) {
+            cout << " ";
+        }
+
+    }
+    void DrawOnEndText(char* text, int width) {
+        DrawNullLine();
+        cout << "|";
+        for (int i = 0; i < width - 2 - strlen(text); i++) {
+            cout << " ";
+        }
+        cout << text << " ";
+        
+    }
+
 };
 
 void BaseAdd(TableCreater table, int width) {
-    Data data[5];
-    data[0].data1 = _strdup("Ведомость общественного транспорта"); data[0].width1 = width - 2;
+    //TableCreater::LineData::ItemData data[5];
+    TableCreater::LineData::ItemData* data = (TableCreater::LineData::ItemData*)calloc(5, sizeof(TableCreater::LineData::ItemData));
+    data[0].data = _strdup("Ведомость общественного транспорта"); data[0].widthItem = width - 2;
     table.setElementsToLine(0, data, 1);
 
-    data[0].data1 = _strdup("Вид транспорта"); data[0].width1 = 15;
-    data[1].data1 = _strdup("Номер маршрута"); data[1].width1 = 15;
-    data[2].data1 = _strdup("Протяженность маршрута (км)"); data[2].width1 = 30;
-    data[3].data1 = _strdup("Время в дороге (мин)"); data[3].width1 = 25;
-    data[4].data1 = _strdup("Дата"); data[4].width1 = 15;
+    data[0].data = _strdup("Вид транспорта"); data[0].widthItem = 15;
+    data[1].data = _strdup("Номер маршрута"); data[1].widthItem = 15;
+    data[2].data = _strdup("Протяженность маршрута (км)"); data[2].widthItem = 30;
+    data[3].data = _strdup("Время в дороге (мин)"); data[3].widthItem = 25;
+    data[4].data = _strdup("Дата"); data[4].widthItem = 15;
     table.setElementsToLine(1, data, 5);
-
+    free(data);
 }
 
 int main()
 {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
-    int width = 100;
+    int width = 106;
     TableCreater table(width, 6);
 
     BaseAdd(table, width);
-
-   
+    char* t = (char*)"test";
+    table.Draw();
+    cout << strlen(t);
     
-    cout << table.getData(0, 0);
+    //cout << table.getData(1, 1);
 
     return 0;
 
