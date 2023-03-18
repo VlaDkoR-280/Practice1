@@ -1,17 +1,21 @@
 ﻿#include <iostream>
 #include <windows.h>
+#include <sstream>
+#include <charconv>
+#include <string>
+#include "Practice1.h"
 using namespace std;
 
 
 struct Date {
     short day;
-    short mounth;
+    short month;
     short year;
 };
 
 struct Transport {
-    char type[3];
-    char number[3];
+    char* type;
+    char* number;
     float lenght;
     short time;
     Date date;
@@ -39,9 +43,6 @@ public:
     TableCreater(int width, int sizeLines) {
         this->width = width; this->sizeLines = sizeLines;
         lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData**));
-        /*for (int i = 0; i < sizeLines; i++) {
-            lines[i] = new LineData;
-        }*/
         
     }
 
@@ -87,6 +88,51 @@ public:
         DrawBorderLine();
         for (int i = 0; i < sizeLines; i++) {
             DrawTextFields(lines[i]);
+        }
+    }
+
+    void DateToChars(char* chars, Date date) {        
+        chars[0] = (int)(date.day / 10) + 48; chars[1] = (int)(date.day % 10) + 48; chars[2] = '.';
+        chars[3] = (int)(date.month / 10) + 48; chars[4] = (int)(date.month % 10) + 48; chars[5] = '.';
+        int year = date.year;
+        for (int i = 0; i < 4; i++) {
+            chars[9 - i] = int(year % 10) + 48;
+            year /= 10;
+        }
+        chars[10] = '\0';
+        
+    }
+
+    void UploadData(Transport* transports, int startLineIndex = 0) {
+        for (int i = startLineIndex; i < sizeLines; i++) {
+            Transport transport = transports[i - startLineIndex];
+            LineData* lineData = new LineData;
+            lineData->sizeItems = new int(5);
+            LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData*));
+            
+
+            items[0].data = transport.type;
+            items[0].pos = Start;
+            items[0].widthItem = 16;
+
+            items[1].data = transport.number;
+            items[1].pos = Start;
+            items[1].widthItem = 16;
+            
+            items[2].data = _strdup(to_string(transport.lenght).c_str());
+            items[2].pos = End;
+            items[2].widthItem = 30;
+
+            items[3].data = _strdup(to_string(transport.time).c_str());
+            items[3].pos = Start;
+            items[3].widthItem = 25;
+
+            items[4].data = new char[9];
+            DateToChars(items[4].data, transport.date);
+            items[4].pos = Centre;
+            items[4].widthItem = 15;
+
+            setElementsToLine(i, lineData);
         }
     }
 
@@ -150,9 +196,8 @@ private:
 
     void DrawOnEndText(char* text, int width) {
         cout << "|";
-        for (int i = 0; i < width - 2 - strlen(text); i++) {
-            cout << " ";
-        }
+        DrawChars(' ', width - 1 - strlen(text));
+
         cout << text << " ";
     }
 };
@@ -180,12 +225,50 @@ int main()
 {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
+
+    TableCreater::LineData** a = (TableCreater::LineData**)calloc(5, sizeof(TableCreater::LineData**));
+    /*int* ptr;
+    for (int i = 0; i < 1; i++) {
+        TableCreater::LineData** b = a;
+        a[0] = new TableCreater::LineData;
+        a[0]->sizeItems = new int(0);
+        ptr = a[0]->sizeItems;
+        cout << *a[0]->sizeItems << " " << *ptr << " ";
+        free(b);
+    }
+    cout << *ptr;*/
+
+
     int width = 108;
-    TableCreater table(width, 2);
 
+    TableCreater table(width, 5);
+    
     BaseAdd(table, width);
-    table.Draw();
+    
+    
+    Transport* transports = (Transport*) calloc(3, sizeof(Transport*));
+    transports[0].type = _strdup("Тр.");
+    transports[0].number = _strdup("12");
+    transports[0].lenght = 27.550f;
+    transports[0].time = 75;
+    transports[0].date.day = 3; transports[0].date.month = 4; transports[0].date.year = 2022;
 
+    transports[1].type = _strdup("Т-с");
+    transports[1].number = _strdup("17");
+    transports[1].lenght = 13.560f;
+    transports[1].time = 57;
+    transports[1].date.day = 3; transports[1].date.month = 4; transports[1].date.year = 2020;
+
+    transports[2].type = _strdup("А");
+    transports[2].number = _strdup("12а");
+    transports[2].lenght = 53.300f;
+    transports[2].time = 117;
+    transports[2].date.day = 4; transports[2].date.month = 3; transports[2].date.year = 2022;
+         
+    table.UploadData(transports, 2);
+
+    //cout << table.getData(2, 0);
+    table.Draw();
     return 0;
 
 }
