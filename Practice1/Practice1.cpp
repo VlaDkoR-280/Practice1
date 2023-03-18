@@ -54,23 +54,17 @@ public:
     /// Очистка lines
     /// </summary>
     void ClearData() {
-        
-    }
-
-    /// <summary>
-    /// Очистка таблицы
-    /// </summary>
-    /// <param name="width">Ширина таблицы, 0 - останется прежним</param>
-    /// <param name="sizeLines">Кол-во строк в таблице, 0 - останется прежним</param>
-    void ClearTable(int width = 0, int sizeLines = 0) {
-        if (width >= 0) this->width = width;
-        if (sizeLines >= 0) this->sizeLines = sizeLines;
-
-        ClearData();
-        lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData**));
         for (int i = 0; i < sizeLines; i++) {
-            lines[i] = new LineData;
+            delete lines[i]->sizeItems;
+
+            for (int j = 0; j < *lines[i]->sizeItems; j++) {
+                delete lines[i]->items[j].data;
+            }
+            free(lines[i]->items);
+
+            free(lines[i]);
         }
+        free(lines);
     }
 
     void setElementsToLine(int indexLine, LineData* lineData) {
@@ -91,22 +85,20 @@ public:
         }
     }
 
-    void DateToChars(char* chars, Date date) {        
-        chars[0] = (int)(date.day / 10) + 48; chars[1] = (int)(date.day % 10) + 48; chars[2] = '.';
-        chars[3] = (int)(date.month / 10) + 48; chars[4] = (int)(date.month % 10) + 48; chars[5] = '.';
-        int year = date.year;
-        for (int i = 0; i < 4; i++) {
-            chars[9 - i] = int(year % 10) + 48;
-            year /= 10;
-        }
-        chars[10] = '\0';
+    void DateToChars(char* chars, Date date) {
+
+        string* buffer = new string((date.day < 10 ? "0" + to_string(date.day) : to_string(date.day)) +
+        "." + (date.month < 10 ? "0" + to_string(date.month) : to_string(date.month)) + "." + to_string(date.year));
+        strcpy_s(chars, sizeof(char) * 11, (*buffer).c_str());
+
+        delete buffer;
         
     }
 
     void UploadData(Transport* transports, int startLineIndex = 0) {
         for (int i = startLineIndex; i < sizeLines; i++) {
             Transport transport = transports[i - startLineIndex];
-            LineData* lineData = new LineData;
+            LineData* lineData = (LineData*) calloc(1, sizeof(LineData));
             lineData->sizeItems = new int(5);
             LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData*));
             
@@ -123,7 +115,8 @@ public:
             items[2].pos = End;
             items[2].widthItem = 30;
 
-            items[3].data = _strdup(to_string(transport.time).c_str());
+            items[3].data = items[2].data = _strdup(to_string(transport.lenght).c_str());
+
             items[3].pos = Start;
             items[3].widthItem = 25;
 
@@ -226,21 +219,8 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    TableCreater::LineData** a = (TableCreater::LineData**)calloc(5, sizeof(TableCreater::LineData**));
-    /*int* ptr;
-    for (int i = 0; i < 1; i++) {
-        TableCreater::LineData** b = a;
-        a[0] = new TableCreater::LineData;
-        a[0]->sizeItems = new int(0);
-        ptr = a[0]->sizeItems;
-        cout << *a[0]->sizeItems << " " << *ptr << " ";
-        free(b);
-    }
-    cout << *ptr;*/
-
 
     int width = 108;
-
     TableCreater table(width, 5);
     
     BaseAdd(table, width);
@@ -268,7 +248,11 @@ int main()
     table.UploadData(transports, 2);
 
     //cout << table.getData(2, 0);
+    //cout << table.getData(2, 0) << endl;
     table.Draw();
+
+    
+
     return 0;
 
 }
