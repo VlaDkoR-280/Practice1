@@ -42,7 +42,7 @@ public:
 
     TableCreater(int width, int sizeLines) {
         this->width = width; this->sizeLines = sizeLines;
-        lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData**));
+        lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData*));
         
     }
 
@@ -55,7 +55,7 @@ public:
     /// </summary>
     void ClearData() {
         for (int i = 0; i < sizeLines; i++) {
-            delete lines[i]->sizeItems;
+            delete (lines[i]->sizeItems);
 
             for (int j = 0; j < *lines[i]->sizeItems; j++) {
                 delete lines[i]->items[j].data;
@@ -95,12 +95,12 @@ public:
         
     }
 
-    void UploadData(Transport* transports, int startLineIndex = 0) {
-        for (int i = startLineIndex; i < sizeLines; i++) {
+    void UploadData(Transport* transports, int size, int startLineIndex = 0) {
+        for (int i = startLineIndex; i < size + startLineIndex; i++) {
             Transport transport = transports[i - startLineIndex];
             LineData* lineData = (LineData*) calloc(1, sizeof(LineData));
             lineData->sizeItems = new int(5);
-            LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData*));
+            LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData));
             
 
             items[0].data = transport.type;
@@ -115,12 +115,11 @@ public:
             items[2].pos = End;
             items[2].widthItem = 30;
 
-            items[3].data = items[2].data = _strdup(to_string(transport.lenght).c_str());
-
+            items[3].data = items[2].data = _strdup(to_string(transport.time).c_str());
             items[3].pos = Start;
             items[3].widthItem = 25;
 
-            items[4].data = new char[9];
+            items[4].data = new char[11];
             DateToChars(items[4].data, transport.date);
             items[4].pos = Centre;
             items[4].widthItem = 15;
@@ -195,12 +194,12 @@ private:
     }
 };
 
-void BaseAdd(TableCreater table, int width) {
+void BaseAdd(TableCreater* table, int width) {
     TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
     TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
     lineData->items = items; lineData->sizeItems = new int(1);
     items->data = _strdup("Ведомость общественного транспорта"); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Start;
-    table.setElementsToLine(0, lineData);
+    table->setElementsToLine(0, lineData);
 
     lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
     items = (TableCreater::LineData::ItemData*)calloc(5, sizeof(TableCreater::LineData::ItemData));
@@ -210,8 +209,17 @@ void BaseAdd(TableCreater table, int width) {
     items[2].data = _strdup("Протяженность маршрута (км)"); items[2].widthItem = 30; items[2].pos = TableCreater::TextPosition::Centre;
     items[3].data = _strdup("Время в дороге (мин)"); items[3].widthItem = 25; items[3].pos = TableCreater::TextPosition::Centre;
     items[4].data = _strdup("Дата"); items[4].widthItem = 15; items[4].pos = TableCreater::TextPosition::Centre;
-    table.setElementsToLine(1, lineData);
+    table->setElementsToLine(1, lineData);
 
+}
+
+void BaseAddEnd(TableCreater* table, int width) {
+    TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
+    TableCreater::LineData::ItemData* items = lineData->items = new TableCreater::LineData::ItemData;
+    lineData->sizeItems = new int(1);
+    items->data = _strdup("Примечание: Тр - трамвай, Тс - троллейбус, А - автобус"); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Start;
+
+    table->setElementsToLine(5, lineData);
 }
 
 int main()
@@ -221,12 +229,12 @@ int main()
 
 
     int width = 108;
-    TableCreater table(width, 5);
+    TableCreater table(width, 6);
     
-    BaseAdd(table, width);
+    BaseAdd(&table, width);
     
     
-    Transport* transports = (Transport*) calloc(3, sizeof(Transport*));
+    Transport* transports = (Transport*) calloc(3, sizeof(Transport));
     transports[0].type = _strdup("Тр.");
     transports[0].number = _strdup("12");
     transports[0].lenght = 27.550f;
@@ -245,7 +253,8 @@ int main()
     transports[2].time = 117;
     transports[2].date.day = 4; transports[2].date.month = 3; transports[2].date.year = 2022;
          
-    table.UploadData(transports, 2);
+    table.UploadData(transports, 3, 2);
+    BaseAddEnd(&table, width);
 
     //cout << table.getData(2, 0);
     //cout << table.getData(2, 0) << endl;
