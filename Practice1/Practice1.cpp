@@ -268,32 +268,37 @@ void BaseAddEnd(TableCreater* table) {
 void BaseAdd2(TableCreater* table) {
     int width = table->width;
     TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
-    TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
+    //TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
     lineData->sizeItems = new int(5);
-    items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
+    TableCreater::LineData::ItemData* items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
     lineData->items = items;
     items[0].data = _strdup("i"); items[0].widthItem = 3; items[0].pos = TableCreater::TextPosition::Centre;
     items[1].data = _strdup("Адрес A[i]"); items[1].widthItem = 30; items[1].pos = TableCreater::TextPosition::Centre;
     items[2].data = _strdup("Строковое поле A[i]"); items[2].widthItem = 25; items[2].pos = TableCreater::TextPosition::Centre;
     items[3].data = _strdup("Адрес B[i]"); items[3].widthItem = 30; items[3].pos = TableCreater::TextPosition::Centre;
     items[4].data = _strdup("Строковое поле B[i]"); items[4].widthItem = 25; items[4].pos = TableCreater::TextPosition::Centre;
-    table->setElementsToLine(0, lineData);
+    table->setElementsToLine(2, lineData);
 
 }
 
 void BaseAdd1(TableCreater* table, Transport** t) {
     int width = table->width;
-    TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
-    TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
-    lineData->sizeItems = new int(5);
-    items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
+    TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(2, sizeof(TableCreater::LineData));
+    lineData->sizeItems = new int(1);
+    TableCreater::LineData::ItemData* items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
     lineData->items = items;
-    items[0].data = _strdup("i"); items[0].widthItem = 3; items[0].pos = TableCreater::TextPosition::Centre;
-    items[1].data = _strdup("Адрес A[i]"); items[1].widthItem = 30; items[1].pos = TableCreater::TextPosition::Centre;
-    items[2].data = _strdup("Строковое поле A[i]"); items[2].widthItem = 25; items[2].pos = TableCreater::TextPosition::Centre;
-    items[3].data = _strdup("Адрес B[i]"); items[3].widthItem = 30; items[3].pos = TableCreater::TextPosition::Centre;
-    items[4].data = _strdup("Строковое поле B[i]"); items[4].widthItem = 25; items[4].pos = TableCreater::TextPosition::Centre;
+    items->data = _strdup("Адрес первого элемента массива newTransports"); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Centre;
     table->setElementsToLine(0, lineData);
+    
+    lineData = (TableCreater::LineData*)calloc(2, sizeof(TableCreater::LineData));
+    items = new TableCreater::LineData::ItemData;
+    lineData->sizeItems = new int(1);
+    lineData->items = items;
+    stringstream ss;
+    ss << &(**t);
+    items->data = _strdup(ss.str().c_str()); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Start;
+    
+    table->setElementsToLine(1, lineData);
 
 }
 
@@ -389,7 +394,7 @@ int main()
     table.ClearData(); // Очистка Данных предыдущей страницы
     table.CreateTable(13, 119); // Создание новой таблицы
 
-
+    BaseAdd1(&table, newTransports);
     BaseAdd2(&table);
 
     // Создание таблицы для ответа на задание
@@ -427,7 +432,7 @@ int main()
         items[4].pos = TableCreater::Start;
         items[4].widthItem = 25;
 
-        table.setElementsToLine(i + 1, lineData);
+        table.setElementsToLine(i + 3, lineData);
     }
 
     table.Draw();
