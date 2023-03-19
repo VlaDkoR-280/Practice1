@@ -30,6 +30,7 @@ public:
 
     int width;
     int sizeLines;
+
     struct LineData {
         int* sizeItems;
         struct ItemData {
@@ -39,11 +40,14 @@ public:
         }* items;
     }** lines;
 
-
+    /// <summary>
+    /// Создание таблицы
+    /// </summary>
+    /// <param name="width">ширина таблицы</param>
+    /// <param name="sizeLines">Количество строк в таблице</param>
     TableCreater(int width, int sizeLines) {
         this->width = width; this->sizeLines = sizeLines;
         lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData*));
-        
     }
 
     ~TableCreater() {
@@ -67,10 +71,21 @@ public:
         free(lines);
     }
 
+    /// <summary>
+    /// Изменение данных строки
+    /// </summary>
+    /// <param name="indexLine">индекс строки</param>
+    /// <param name="lineData">Данные строки</param>
     void setElementsToLine(int indexLine, LineData* lineData) {
         lines[indexLine] = lineData;
     }
 
+    /// <summary>
+    /// Получение данных ячейки
+    /// </summary>
+    /// <param name="line_i">Индекс строки</param>
+    /// <param name="colum_i">Индекс столбца</param>
+    /// <returns></returns>
     const char* getData(int line_i, int colum_i) {
         LineData* lineData = lines[line_i];
         TableCreater::LineData::ItemData* item = lines[line_i]->items;
@@ -78,23 +93,24 @@ public:
         return item[colum_i].data;
     }
 
+    /// <summary>
+    /// Отрисовка таблицы
+    /// </summary>
     void Draw() {
         DrawBorderLine();
-        for (int i = 0; i < sizeLines; i++) {
-            DrawTextFields(lines[i]);
+        for (int i = 0; i < sizeLines - 1; i++) {
+            DrawTextFields(lines[i], lines[i+1]);
         }
+        DrawTextFields(lines[sizeLines - 1]);
     }
 
-    void DateToChars(char* chars, Date date) {
-
-        string* buffer = new string((date.day < 10 ? "0" + to_string(date.day) : to_string(date.day)) +
-        "." + (date.month < 10 ? "0" + to_string(date.month) : to_string(date.month)) + "." + to_string(date.year));
-        strcpy_s(chars, sizeof(char) * 11, (*buffer).c_str());
-
-        delete buffer;
-        
-    }
-
+    
+    /// <summary>
+    /// Загрузка данных в таблицу
+    /// </summary>
+    /// <param name="transports">Объект для загрузки</param>
+    /// <param name="size">Количество оъектов</param>
+    /// <param name="startLineIndex">Индекс первой строки для загрузки первого элемента</param>
     void UploadData(Transport* transports, int size, int startLineIndex = 0) {
         for (int i = startLineIndex; i < size + startLineIndex; i++) {
             Transport transport = transports[i - startLineIndex];
@@ -130,11 +146,21 @@ public:
 
 
 private:
+    void DateToChars(char* chars, Date date) {
+
+        string* buffer = new string((date.day < 10 ? "0" + to_string(date.day) : to_string(date.day)) +
+            "." + (date.month < 10 ? "0" + to_string(date.month) : to_string(date.month)) + "." + to_string(date.year));
+        strcpy_s(chars, sizeof(char) * 11, (*buffer).c_str());
+
+        delete buffer;
+
+    }
+
     void DrawChars(char ch, int length) {
         cout.width(length); cout.fill(ch); cout << ch;
     }
     
-    void DrawTextFields(TableCreater::LineData* lineData) {
+    void DrawTextFields(TableCreater::LineData* lineData, TableCreater::LineData* nextLineData = NULL) {
         for (int i = 0; i < *lineData->sizeItems; i++) {
             TableCreater::LineData::ItemData item = lineData->items[i];
             switch (item.pos) {
@@ -150,23 +176,24 @@ private:
             }
         }
         cout << '|' << endl;
-        DrawBorderLine(lineData);
+        if (nextLineData == NULL) {
+            DrawBorderLine();
+            return;
+        }
+        if(*lineData->sizeItems == *nextLineData->sizeItems) DrawBorderLine(lineData);
+        else DrawBorderLine();
+        
     }
-
-
     
     void DrawBorderLine() {
-        DrawChars('-', width); cout << endl;
+        cout << '|';
+        DrawChars('-', width - 2); cout << '|' << endl;
     }
 
     void DrawBorderLine(LineData* line) {
         cout << '|';
         for (int i = 0; i < *line->sizeItems; i++) {
-            int nullWidth = line->items[i].widthItem;
-            for (int j = 0; j < nullWidth; j++) {
-                cout << '-';
-            }
-            cout << '|';
+            cout.width(line->items[i].widthItem + 1); cout.fill('-'); cout << '|';
         }
         cout << endl;
     }
@@ -182,19 +209,22 @@ private:
     void DrawOnStartText(char* text, int width) {
         cout << "| ";
         cout << text;
-        
         DrawChars(' ', width - 1 - strlen(text));
     }
 
     void DrawOnEndText(char* text, int width) {
         cout << "|";
         DrawChars(' ', width - 1 - strlen(text));
-
         cout << text << " ";
     }
 };
 
-void BaseAdd(TableCreater* table, int width) {
+/// <summary>
+/// Добавление заголовков в таблицу
+/// </summary>
+/// <param name="table">Указатель на table</param>
+void BaseAdd(TableCreater* table) {
+    int width = table->width;
     TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
     TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
     lineData->items = items; lineData->sizeItems = new int(1);
@@ -213,7 +243,8 @@ void BaseAdd(TableCreater* table, int width) {
 
 }
 
-void BaseAddEnd(TableCreater* table, int width) {
+void BaseAddEnd(TableCreater* table) {
+    int width = table->width;
     TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
     TableCreater::LineData::ItemData* items = lineData->items = new TableCreater::LineData::ItemData;
     lineData->sizeItems = new int(1);
@@ -227,12 +258,10 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-
     int width = 108;
     TableCreater table(width, 6);
     
-    BaseAdd(&table, width);
-    
+    BaseAdd(&table);
     
     Transport* transports = (Transport*) calloc(3, sizeof(Transport));
     transports[0].type = _strdup("Тр.");
@@ -254,10 +283,9 @@ int main()
     transports[2].date.day = 4; transports[2].date.month = 3; transports[2].date.year = 2022;
          
     table.UploadData(transports, 3, 2);
-    BaseAddEnd(&table, width);
+    BaseAddEnd(&table);
 
-    //cout << table.getData(2, 0);
-    //cout << table.getData(2, 0) << endl;
+
     table.Draw();
 
     
@@ -265,36 +293,3 @@ int main()
     return 0;
 
 }
-
-/* EXAMPLE TABLEs
- ---------------------------------
-| test        | test2             |
-|---------------------------------|
-| test        | test2             |
-|---------------------------------|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------|
-
- 
- _________________________________
-| test        | test2             |
-|_____________|___________________|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------|
-| test        | test2             |
-|-------------|-------------------| 
- 
- 
- */
