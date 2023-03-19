@@ -1,8 +1,8 @@
 ﻿#include <iostream>
 #include <windows.h>
-#include <sstream>
-#include <charconv>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include "Practice1.h"
 using namespace std;
 
@@ -127,11 +127,15 @@ public:
             items[1].pos = Start;
             items[1].widthItem = 16;
             
-            items[2].data = _strdup(to_string(transport.lenght).c_str());
+            
+            stringstream ssLength;
+            ssLength << fixed << setprecision(3) << transport.lenght;
+            
+            items[2].data = _strdup(ssLength.str().c_str());
             items[2].pos = End;
             items[2].widthItem = 30;
 
-            items[3].data = items[2].data = _strdup(to_string(transport.time).c_str());
+            items[3].data = _strdup(to_string(transport.time).c_str());
             items[3].pos = Start;
             items[3].widthItem = 25;
 
