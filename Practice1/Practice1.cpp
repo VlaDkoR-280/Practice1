@@ -71,6 +71,9 @@ public:
         free(lines);
     }
 
+    void CreateTable() {
+        lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData*));
+    }
     /// <summary>
     /// Изменение данных строки
     /// </summary>
@@ -111,36 +114,36 @@ public:
     /// <param name="transports">Объект для загрузки</param>
     /// <param name="size">Количество оъектов</param>
     /// <param name="startLineIndex">Индекс первой строки для загрузки первого элемента</param>
-    void UploadData(Transport* transports, int size, int startLineIndex = 0) {
+    void UploadData(Transport** transports, int size, int startLineIndex = 0) {
         for (int i = startLineIndex; i < size + startLineIndex; i++) {
-            Transport transport = transports[i - startLineIndex];
+            Transport* transport = transports[i - startLineIndex];
             LineData* lineData = (LineData*) calloc(1, sizeof(LineData));
             lineData->sizeItems = new int(5);
             LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData));
             
 
-            items[0].data = transport.type;
+            items[0].data = transport->type;
             items[0].pos = Start;
             items[0].widthItem = 16;
 
-            items[1].data = transport.number;
+            items[1].data = transport->number;
             items[1].pos = Start;
             items[1].widthItem = 16;
             
             
             stringstream ssLength;
-            ssLength << fixed << setprecision(3) << transport.lenght;
+            ssLength << fixed << setprecision(3) << transport->lenght;
             
             items[2].data = _strdup(ssLength.str().c_str());
             items[2].pos = End;
             items[2].widthItem = 30;
 
-            items[3].data = _strdup(to_string(transport.time).c_str());
+            items[3].data = _strdup(to_string(transport->time).c_str());
             items[3].pos = Start;
             items[3].widthItem = 25;
 
             items[4].data = new char[11];
-            DateToChars(items[4].data, transport.date);
+            DateToChars(items[4].data, transport->date);
             items[4].pos = Centre;
             items[4].widthItem = 15;
 
@@ -257,6 +260,15 @@ void BaseAddEnd(TableCreater* table) {
     table->setElementsToLine(5, lineData);
 }
 
+void ClearDataTransports(Transport** transport, int size = 1) {
+    for (int i = 0; i < size; i++) {
+        Transport* tr = transport[i];
+        delete tr->number;
+        delete tr->type;
+        free(tr);
+    }
+}
+
 int main()
 {
     SetConsoleCP(1251);
@@ -267,33 +279,68 @@ int main()
     
     BaseAdd(&table);
     
-    Transport* transports = (Transport*) calloc(3, sizeof(Transport));
-    transports[0].type = _strdup("Тр.");
-    transports[0].number = _strdup("12");
-    transports[0].lenght = 27.550f;
-    transports[0].time = 75;
-    transports[0].date.day = 3; transports[0].date.month = 4; transports[0].date.year = 2022;
+    Transport** transports = (Transport**) calloc(3, sizeof(Transport*));
 
-    transports[1].type = _strdup("Т-с");
-    transports[1].number = _strdup("17");
-    transports[1].lenght = 13.560f;
-    transports[1].time = 57;
-    transports[1].date.day = 3; transports[1].date.month = 4; transports[1].date.year = 2020;
+    transports[0] = new Transport;
+    transports[0]->type = _strdup("Тр.");
+    transports[0]->number = _strdup("12");
+    transports[0]->lenght = 27.550f;
+    transports[0]->time = 75;
+    transports[0]->date.day = 3; transports[0]->date.month = 4; transports[0]->date.year = 2022;
 
-    transports[2].type = _strdup("А");
-    transports[2].number = _strdup("12а");
-    transports[2].lenght = 53.300f;
-    transports[2].time = 117;
-    transports[2].date.day = 4; transports[2].date.month = 3; transports[2].date.year = 2022;
+    transports[1] = new Transport;
+    transports[1]->type = _strdup("Т-с");
+    transports[1]->number = _strdup("17");
+    transports[1]->lenght = 13.560f;
+    transports[1]->time = 57;
+    transports[1]->date.day = 3; transports[1]->date.month = 4; transports[1]->date.year = 2020;
+
+    transports[2] = new Transport;
+    transports[2]->type = _strdup("А");
+    transports[2]->number = _strdup("12а");
+    transports[2]->lenght = 53.300f;
+    transports[2]->time = 117;
+    transports[2]->date.day = 4; transports[2]->date.month = 3; transports[2]->date.year = 2022;
          
     table.UploadData(transports, 3, 2);
     BaseAddEnd(&table);
 
+    Transport** newTransports = (Transport**)calloc(3, sizeof(Transport*));
+    Transport** minTime = NULL, **maxTime = NULL;
+    for (int i = 0; i < 3; i++) {
+        newTransports[i] = transports[i];
+        float time = transports[i]->time;
+        if (minTime == NULL) minTime = &newTransports[i];
+        if (maxTime == NULL) maxTime = &newTransports[i];
+
+        if((*minTime)->time > time) minTime = &newTransports[i];
+        if((*maxTime)->time < time) maxTime = &newTransports[i];
+    }
+
+    if (minTime != maxTime) {
+        Transport* b = *minTime;
+        *minTime = *maxTime;
+        *maxTime = b;
+    }
+
+    table.Draw();
+    table.ClearData();
+    table.CreateTable();
+
+    cout << endl << "Вариант задания: Поменять местами записи (элементы массива структур),";
+    cout << endl << "\t\t" << " содержащие минимальное и максимальное время в дороге" << endl << endl;
+
+    
+    BaseAdd(&table);
+    table.UploadData(newTransports, 3, 2);
+    BaseAddEnd(&table);
 
     table.Draw();
 
-    
+    ClearDataTransports(transports, 3);
 
+    free(newTransports);
+    free(transports);
     return 0;
 
 }
