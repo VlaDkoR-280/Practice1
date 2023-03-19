@@ -58,20 +58,22 @@ public:
     /// Очистка lines
     /// </summary>
     void ClearData() {
+        if (lines == NULL) return;
         for (int i = 0; i < sizeLines; i++) {
-            delete (lines[i]->sizeItems);
-
             for (int j = 0; j < *lines[i]->sizeItems; j++) {
                 delete lines[i]->items[j].data;
             }
             free(lines[i]->items);
-
+            delete (lines[i]->sizeItems);
             free(lines[i]);
+            
         }
         free(lines);
     }
 
-    void CreateTable() {
+    void CreateTable(int sizeLines, int width) {
+        this->sizeLines = sizeLines;
+        this->width = width;
         lines = (TableCreater::LineData**)calloc(this->sizeLines, sizeof(TableCreater::LineData*));
     }
     /// <summary>
@@ -80,6 +82,9 @@ public:
     /// <param name="indexLine">индекс строки</param>
     /// <param name="lineData">Данные строки</param>
     void setElementsToLine(int indexLine, LineData* lineData) {
+        if (indexLine + 1 > sizeLines) {
+            cout << "Error size"; return;
+        }
         lines[indexLine] = lineData;
     }
 
@@ -122,11 +127,11 @@ public:
             LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData));
             
 
-            items[0].data = transport->type;
+            items[0].data = _strdup(transport->type);
             items[0].pos = Start;
             items[0].widthItem = 16;
 
-            items[1].data = transport->number;
+            items[1].data = _strdup(transport->number);
             items[1].pos = Start;
             items[1].widthItem = 16;
             
@@ -260,6 +265,38 @@ void BaseAddEnd(TableCreater* table) {
     table->setElementsToLine(5, lineData);
 }
 
+void BaseAdd2(TableCreater* table) {
+    int width = table->width;
+    TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
+    TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
+    lineData->sizeItems = new int(5);
+    items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
+    lineData->items = items;
+    items[0].data = _strdup("i"); items[0].widthItem = 3; items[0].pos = TableCreater::TextPosition::Centre;
+    items[1].data = _strdup("Адрес A[i]"); items[1].widthItem = 30; items[1].pos = TableCreater::TextPosition::Centre;
+    items[2].data = _strdup("Строковое поле A[i]"); items[2].widthItem = 25; items[2].pos = TableCreater::TextPosition::Centre;
+    items[3].data = _strdup("Адрес B[i]"); items[3].widthItem = 30; items[3].pos = TableCreater::TextPosition::Centre;
+    items[4].data = _strdup("Строковое поле B[i]"); items[4].widthItem = 25; items[4].pos = TableCreater::TextPosition::Centre;
+    table->setElementsToLine(0, lineData);
+
+}
+
+void BaseAdd1(TableCreater* table, Transport** t) {
+    int width = table->width;
+    TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
+    TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
+    lineData->sizeItems = new int(5);
+    items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
+    lineData->items = items;
+    items[0].data = _strdup("i"); items[0].widthItem = 3; items[0].pos = TableCreater::TextPosition::Centre;
+    items[1].data = _strdup("Адрес A[i]"); items[1].widthItem = 30; items[1].pos = TableCreater::TextPosition::Centre;
+    items[2].data = _strdup("Строковое поле A[i]"); items[2].widthItem = 25; items[2].pos = TableCreater::TextPosition::Centre;
+    items[3].data = _strdup("Адрес B[i]"); items[3].widthItem = 30; items[3].pos = TableCreater::TextPosition::Centre;
+    items[4].data = _strdup("Строковое поле B[i]"); items[4].widthItem = 25; items[4].pos = TableCreater::TextPosition::Centre;
+    table->setElementsToLine(0, lineData);
+
+}
+
 void ClearDataTransports(Transport** transport, int size = 1) {
     for (int i = 0; i < size; i++) {
         Transport* tr = transport[i];
@@ -279,7 +316,7 @@ int main()
     
     BaseAdd(&table);
     
-    Transport** transports = (Transport**) calloc(3, sizeof(Transport*));
+    Transport** transports = (Transport**) calloc(10, sizeof(Transport*));
 
     transports[0] = new Transport;
     transports[0]->type = _strdup("Тр.");
@@ -301,14 +338,20 @@ int main()
     transports[2]->lenght = 53.300f;
     transports[2]->time = 117;
     transports[2]->date.day = 4; transports[2]->date.month = 3; transports[2]->date.year = 2022;
-         
+    
+    for (int i = 3; i < 10; i++) {
+        transports[i] = new Transport;
+        transports[i]->number = new char[3];
+        transports[i]->type = new char[3];
+    }
     table.UploadData(transports, 3, 2);
     BaseAddEnd(&table);
 
-    Transport** newTransports = (Transport**)calloc(3, sizeof(Transport*));
+    Transport** newTransports = (Transport**)calloc(10, sizeof(Transport*));
     Transport** minTime = NULL, **maxTime = NULL;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 10; i++) {
         newTransports[i] = transports[i];
+        if (i > 2) continue;
         float time = transports[i]->time;
         if (minTime == NULL) minTime = &newTransports[i];
         if (maxTime == NULL) maxTime = &newTransports[i];
@@ -324,23 +367,75 @@ int main()
     }
 
     table.Draw();
-    table.ClearData();
-    table.CreateTable();
+    cout << endl << endl;
+    Transport** A = (Transport**)calloc(3, sizeof(Transport*));
 
-    cout << endl << "Вариант задания: Поменять местами записи (элементы массива структур),";
-    cout << endl << "\t\t" << " содержащие минимальное и максимальное время в дороге" << endl << endl;
+    for (int i = 0; i < 3; i++) {
+        A[i] = newTransports[i];
+    }
 
-    
-    BaseAdd(&table);
-    table.UploadData(newTransports, 3, 2);
-    BaseAddEnd(&table);
+    Transport** B = new Transport*[10];
+    for (int i = 0; i < 10; i++) {
+        B[i] = newTransports[i];
+    }
+
+    A = (Transport**)realloc(A, 10 * sizeof(Transport*));
+
+    for (int i = 3; i < 10; i++) {
+        A[i] = (Transport*)calloc(1, sizeof(Transport));
+        A[i]->number = new char[3];
+    }
+
+    table.ClearData(); // Очистка Данных предыдущей страницы
+    table.CreateTable(13, 119); // Создание новой таблицы
+
+
+    BaseAdd2(&table);
+
+    // Создание таблицы для ответа на задание
+    for (int i = 0; i < 10; i++) {
+        TableCreater::LineData* lineData = new TableCreater::LineData;
+        lineData->sizeItems = new int(5);
+        TableCreater::LineData::ItemData* items = lineData->items =
+            (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
+        
+        items[0].data = _strdup(to_string(i).c_str());
+        items[0].pos = TableCreater::Centre;
+        items[0].widthItem = 3;
+        
+        // A - Transport**      |
+        //                      | => *A[i] - Transport => &(*A[i]) - адрес на ячейку,
+        // A[i] - Transport*    |                                   содержащую Transport
+
+        stringstream ss;
+        ss << &(*A[i]);
+        items[1].data = _strdup(ss.str().c_str()); 
+        items[1].pos = TableCreater::Start;
+        items[1].widthItem = 30;
+
+        items[2].data = _strdup(A[i]->number);
+        items[2].pos = TableCreater::Start;
+        items[2].widthItem = 25;
+
+        stringstream ss2;
+        ss2 << &(*B[i]);
+        items[3].data = _strdup(ss2.str().c_str());
+        items[3].pos = TableCreater::Start;
+        items[3].widthItem = 30;
+
+        items[4].data = _strdup(B[i]->number);
+        items[4].pos = TableCreater::Start;
+        items[4].widthItem = 25;
+
+        table.setElementsToLine(i + 1, lineData);
+    }
 
     table.Draw();
 
-    ClearDataTransports(transports, 3);
-
+    ClearDataTransports(transports, 10);
+    for (int i = 3; i < 10; i++) free(A[i]);
+    free(A); free(B);
     free(newTransports);
-    free(transports);
     return 0;
 
 }
