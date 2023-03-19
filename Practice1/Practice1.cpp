@@ -21,6 +21,57 @@ struct Transport {
     Date date;
 };
 
+class MyList {
+public:
+    struct Node {
+        Transport data;
+        Node* next = NULL;
+    }* node;
+    int size = 0;
+    
+
+    MyList(Transport data) {
+        this->node->data = data;
+        size = 1;
+        node->next = this->node;
+    }
+    MyList() {
+
+    }
+    
+    void ToNext() {
+        this->node = node->next;
+    }
+
+    void Add(Transport data) {
+        if (size == 0) {
+            size = 1;
+            node = new Node();
+            this->node->data = data;
+            this->node->next = this->node;
+            return;
+        }
+        Node* last = node->next;
+        for (int i = 1; i < size - 1; i++) {
+            last = last->next;
+        }
+        last->next = new Node();
+        last->next->data = data;
+        last->next->next = this->node;
+        
+    }
+
+   /* void RemoveNext() {
+        MyList* newNext = next->next;
+        delete next;
+        this->next = newNext;
+    }*/
+
+    short getMonth() {
+        return node->data.date.month;
+    }
+};
+
 class TableCreater {
 public:
 
@@ -317,9 +368,9 @@ int main()
     SetConsoleOutputCP(1251);
 
     int width = 108;
-    TableCreater table(width, 6);
+    //TableCreater table(width, 6);
     
-    BaseAdd(&table);
+    //BaseAdd(&table);
     
     Transport** transports = (Transport**) calloc(10, sizeof(Transport*));
 
@@ -349,8 +400,8 @@ int main()
         transports[i]->number = new char[3];
         transports[i]->type = new char[3];
     }
-    table.UploadData(transports, 3, 2);
-    BaseAddEnd(&table);
+    //table.UploadData(transports, 3, 2);
+    //BaseAddEnd(&table);
 
     Transport** newTransports = (Transport**)calloc(10, sizeof(Transport*));
     Transport** minTime = NULL, **maxTime = NULL;
@@ -371,8 +422,9 @@ int main()
         *maxTime = b;
     }
 
-    table.Draw();
-    cout << endl << endl;
+    
+    //table.Draw();
+    //cout << endl << endl;
     Transport** A = (Transport**)calloc(3, sizeof(Transport*));
 
     for (int i = 0; i < 3; i++) {
@@ -391,8 +443,8 @@ int main()
         A[i]->number = new char[3];
     }
 
-    table.ClearData(); // Очистка Данных предыдущей страницы
-    table.CreateTable(13, 119); // Создание новой таблицы
+    //table.ClearData(); // Очистка Данных предыдущей страницы
+    TableCreater table(119, 13); // Создание новой таблицы
 
     BaseAdd1(&table, newTransports);
     BaseAdd2(&table);
@@ -411,6 +463,8 @@ int main()
         // A - Transport**      |
         //                      | => *A[i] - Transport => &(*A[i]) - адрес на ячейку,
         // A[i] - Transport*    |                                   содержащую Transport
+
+
 
         stringstream ss;
         ss << &(*A[i]);
@@ -435,7 +489,20 @@ int main()
         table.setElementsToLine(i + 3, lineData);
     }
 
-    table.Draw();
+    //table.Draw();
+
+    MyList list;
+
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 10; j++) {
+            list.Add(*newTransports[j]);
+        }
+    }
+
+
+
+
+
 
     ClearDataTransports(transports, 10);
     for (int i = 3; i < 10; i++) free(A[i]);
