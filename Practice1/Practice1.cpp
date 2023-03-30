@@ -67,6 +67,10 @@ public:
         return *node->data;
     }
 
+    Data* getAdressData() {
+        return node->data;
+    }
+
     Data getNextData() {
         return *node->next->data;
     }
@@ -259,6 +263,14 @@ public:
             setElementsToLine(i, lineData);
         }
     }
+    /*template<typename Type>
+    void UploadData(MyList<Type> list, int startIndex = 0) {
+        for (int i = startLineIndex; i < size + startLineIndex; i++) {
+            Type data = list.getData();
+            LineData* lineData = (LineData*)calloc(1, sizeof(LineData));
+        }
+    }*/
+
 
 
 private:
@@ -420,7 +432,12 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    int width = 108;
+    int width = 109;
+    int countHeaderLines = 2;
+
+    
+
+    
 
 #pragma region createTransports 
     Transport** transports = (Transport**) calloc(10, sizeof(Transport*));
@@ -451,8 +468,6 @@ int main()
         transports[i]->number = new char[3];
         transports[i]->type = new char[3];
     }
-    //table.UploadData(transports, 3, 2);
-    //BaseAddEnd(&table);
 
     Transport** newTransports = (Transport**)calloc(10, sizeof(Transport*));
     Transport** minTime = NULL, **maxTime = NULL;
@@ -474,36 +489,91 @@ int main()
     }
 
 #pragma endregion Создание и инициализация объектов
+
+    MyList<Transport> list;
+    for (int x = 0; x < 2; x++) {
+        for (int i = 0; i < 3; i++) {
+            list.AddElementToNext(newTransports[i]);
+        }
+    }
+    int month;
+    cout << "Введите номер месяца: "; cin >> month;
+    Transport newTransport = Transport();
+    newTransport.type = new char[15];
+    cout << "Создание новой записи\nВид транспорта: "; cin >> newTransport.type;
+    newTransport.number = new char[15];
+    cout << "Номер маршрута: "; cin >> newTransport.number;
+    cout << "Продолжительность маршрута: "; cin >> newTransport.lenght;
+    cout << "Время в дороге: "; cin >> newTransport.time;
+    Date date;
+    cout << "Дата в формате {день месяц год/11 11 1111}: "; cin >> date.day >> date.month >> date.year;
+    newTransport.date = date;
     
-#pragma region createTable
-//    TableCreater table(width, 6);
-//    BaseAdd(&table);
-//    table.UploadData(newTransports, 3, 2);
-//    BaseAddEnd(&table);
-//
-//
-//    table.Draw();
-//
-#pragma endregion Создание таблицы и отрисовка
+    int sizeEl = list.getSize();
+    for (int i = 0; i < sizeEl; i++) {
+        Transport t = list.getData();
+        if (t.date.month == month) {
+            list.AddElementToNext(new Transport(newTransport));
+            list.ToNext();
+        }
+        list.ToNext();
+    }
+
+    
+    TableCreater table(width, countHeaderLines + list.getSize());
     
 #pragma region createHeader
 
+    TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
+    TableCreater::LineData::ItemData* items = lineData->items = new TableCreater::LineData::ItemData; lineData->sizeItems = new int(1);
+    items->data = _strdup("Задание номер 3"); items->widthItem = 107; items->pos = TableCreater::Centre;
+    
+    table.setElementsToLine(0, lineData);
 
+    lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
+    items = lineData->items = (TableCreater::LineData::ItemData*) calloc(3, sizeof(TableCreater::LineData::ItemData)); lineData->sizeItems = new int(3);
+    items[0].data = _strdup("i"); items[0].widthItem = 5; items[0].pos = TableCreater::Centre;
+    items[1].data = _strdup("Адрес элемента"); items[1].widthItem = 50; items[1].pos = TableCreater::Start;
+    items[2].data = _strdup("Адрес следущего элемента"); items[2].widthItem = 50; items[2].pos = TableCreater::Start;
+    
+    table.setElementsToLine(1, lineData);
+    
 
 #pragma endregion Создание шапки для таблицы
     
-    MyList<Transport> list;
+    
+    
 
-    for (int i = 0; i < 3; i++) {
-        list.AddElementToNext(newTransports[i]);
+#pragma region addDataToTable
+    for (int i = 0; i < list.getSize(); i++) {
+        TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
+        TableCreater::LineData::ItemData* items = lineData->items = (TableCreater::LineData::ItemData*)calloc(3, sizeof(TableCreater::LineData::ItemData)); lineData->sizeItems = new int(3);
+        stringstream ss1; 
+        ss1 << i;
+        items[0].data = _strdup(ss1.str().c_str());
+        items[0].pos = TableCreater::Centre;
+        items[0].widthItem = 5;
+
+        stringstream ss2;
+        ss2 << list.node;
+        items[1].data = _strdup(ss2.str().c_str());
+        items[1].pos = TableCreater::Start;
+        items[1].widthItem = 50;
+
+        stringstream ss3;
+        ss3 << list.node->next;
+        items[2].data = _strdup(ss3.str().c_str());
+        items[2].pos = TableCreater::Start;
+        items[2].widthItem = 50;
+
+        list.ToNext();
+
+        table.setElementsToLine(i + 2, lineData);
     }
-
-    cout << list.getData().type << endl;
-    for (int i = 1; i < 9; i++) {
-        cout << list.ToNext().type << endl;
-    }
-
-
+    
+#pragma endregion Добавление элементов из списка в таблицу по заданию
+    
+    table.Draw();
 
     ClearDataTransports(transports, 10);
     free(newTransports);
