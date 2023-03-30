@@ -20,55 +20,108 @@ struct Transport {
     short time;
     Date date;
 };
-
+template <typename Data>
 class MyList {
 public:
+    
     struct Node {
-        Transport data;
-        Node* next = NULL;
+        Node* next;
+        Data* data;
     }* node;
-    int size = 0;
     
-
-    MyList(Transport data) {
-        this->node->data = data;
-        size = 1;
-        node->next = this->node;
-    }
     MyList() {
-
-    }
-    
-    void ToNext() {
-        this->node = node->next;
+        node = new Node;
+        node->next = NULL;
+        node->data = NULL;
     }
 
-    void Add(Transport data) {
-        if (size == 0) {
-            size = 1;
-            node = new Node();
-            this->node->data = data;
-            this->node->next = this->node;
-            return;
+    MyList(Data** data, int size) {
+        if (size == 0) return;
+        node = new Node;
+        node->data = *data;
+        Node* next = node;
+        for (int i = 1; i < size; i++) {
+            next = next->next = new Node;
+            next->data = data[i];
         }
-        Node* last = node->next;
-        for (int i = 1; i < size - 1; i++) {
-            last = last->next;
-        }
-        last->next = new Node();
-        last->next->data = data;
-        last->next->next = this->node;
-        
+        next->next = node;
+        _size += size;
     }
 
-   /* void RemoveNext() {
-        MyList* newNext = next->next;
-        delete next;
-        this->next = newNext;
-    }*/
+    ~MyList() {
+        Node* next = node->next;
+        free(node);
+        for (int i = 1; i < _size; i++) {
+            Node* buf = next->next;
+            free(next);
+            next = buf;
+        }
+    }
 
-    short getMonth() {
-        return node->data.date.month;
+    Data ToNext() {
+        node = node->next;
+        return *node->data;
+    }
+
+    Data getData() {
+        return *node->data;
+    }
+
+    Data getNextData() {
+        return *node->next->data;
+    }
+
+    void DeleteItem() {
+        if (_size == 0) return;
+        if (_size == 1) {
+            free(node);
+            node = NULL;
+        }
+        else if (_size > 1) {
+            Node* prev = GetPrevElement();
+            prev->next = node->next;
+            free(node);
+            node = prev->next;
+        }
+
+        _size--;
+
+    }
+
+    void DeleteNextItem() {
+        Node* next = node->next;
+        node->next = next->next;
+        free(next);
+        _size--;
+    }
+
+    void AddElementToNext(Data* data) {
+        if (_size == 0) {
+            node = new Node;
+            node->next = node;
+            node->data = data;
+        }
+        else {
+            Node* prevNext = node->next;
+            node->next = new Node;
+            node->next->next = prevNext;
+            node->next->data = data;
+        }
+        _size++;
+    }
+
+
+    int getSize() { return _size; }
+
+private:
+    int _size = 0;
+
+    Node* GetPrevElement() {
+        Node* next = node;
+        for (int i = 1; i < _size; i++) {
+            next = next->next;
+        }
+        return next;
     }
 };
 
@@ -368,10 +421,8 @@ int main()
     SetConsoleOutputCP(1251);
 
     int width = 108;
-    //TableCreater table(width, 6);
-    
-    //BaseAdd(&table);
-    
+
+#pragma region createTransports 
     Transport** transports = (Transport**) calloc(10, sizeof(Transport*));
 
     transports[0] = new Transport;
@@ -422,91 +473,39 @@ int main()
         *maxTime = b;
     }
 
+#pragma endregion Создание и инициализация объектов
     
-    //table.Draw();
-    //cout << endl << endl;
-    Transport** A = (Transport**)calloc(3, sizeof(Transport*));
+#pragma region createTable
+//    TableCreater table(width, 6);
+//    BaseAdd(&table);
+//    table.UploadData(newTransports, 3, 2);
+//    BaseAddEnd(&table);
+//
+//
+//    table.Draw();
+//
+#pragma endregion Создание таблицы и отрисовка
+    
+#pragma region createHeader
+
+
+
+#pragma endregion Создание шапки для таблицы
+    
+    MyList<Transport> list;
 
     for (int i = 0; i < 3; i++) {
-        A[i] = newTransports[i];
+        list.AddElementToNext(newTransports[i]);
     }
 
-    Transport** B = new Transport*[10];
-    for (int i = 0; i < 10; i++) {
-        B[i] = newTransports[i];
+    cout << list.getData().type << endl;
+    for (int i = 1; i < 9; i++) {
+        cout << list.ToNext().type << endl;
     }
-
-    A = (Transport**)realloc(A, 10 * sizeof(Transport*));
-
-    for (int i = 3; i < 10; i++) {
-        A[i] = (Transport*)calloc(1, sizeof(Transport));
-        A[i]->number = new char[3];
-    }
-
-    //table.ClearData(); // Очистка Данных предыдущей страницы
-    TableCreater table(119, 13); // Создание новой таблицы
-
-    BaseAdd1(&table, newTransports);
-    BaseAdd2(&table);
-
-    // Создание таблицы для ответа на задание
-    for (int i = 0; i < 10; i++) {
-        TableCreater::LineData* lineData = new TableCreater::LineData;
-        lineData->sizeItems = new int(5);
-        TableCreater::LineData::ItemData* items = lineData->items =
-            (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
-        
-        items[0].data = _strdup(to_string(i).c_str());
-        items[0].pos = TableCreater::Centre;
-        items[0].widthItem = 3;
-        
-        // A - Transport**      |
-        //                      | => *A[i] - Transport => &(*A[i]) - адрес на ячейку,
-        // A[i] - Transport*    |                                   содержащую Transport
-
-
-
-        stringstream ss;
-        ss << &(*A[i]);
-        items[1].data = _strdup(ss.str().c_str()); 
-        items[1].pos = TableCreater::Start;
-        items[1].widthItem = 30;
-
-        items[2].data = _strdup(A[i]->number);
-        items[2].pos = TableCreater::Start;
-        items[2].widthItem = 25;
-
-        stringstream ss2;
-        ss2 << &(*B[i]);
-        items[3].data = _strdup(ss2.str().c_str());
-        items[3].pos = TableCreater::Start;
-        items[3].widthItem = 30;
-
-        items[4].data = _strdup(B[i]->number);
-        items[4].pos = TableCreater::Start;
-        items[4].widthItem = 25;
-
-        table.setElementsToLine(i + 3, lineData);
-    }
-
-    //table.Draw();
-
-    MyList list;
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 10; j++) {
-            list.Add(*newTransports[j]);
-        }
-    }
-
-
-
 
 
 
     ClearDataTransports(transports, 10);
-    for (int i = 3; i < 10; i++) free(A[i]);
-    free(A); free(B);
     free(newTransports);
     return 0;
 
