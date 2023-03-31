@@ -470,10 +470,6 @@ int main()
     int width = 109;
     int countHeaderLines = 2;
 
-
-
-
-
 #pragma region createTransports 
     Transport** transports = (Transport**)calloc(10, sizeof(Transport*));
 
@@ -525,10 +521,10 @@ int main()
 
 #pragma endregion Создание и инициализация объектов
 
-    MyList<Transport> list;
+    MyList<Transport>* list = new MyList<Transport>();
     for (int x = 0; x < 2; x++) {
         for (int i = 0; i < 3; i++) {
-            list.AddElementToNext(newTransports[i]);
+            list->AddElementToNext(newTransports[i]);
         }
     }
     int month;
@@ -544,18 +540,37 @@ int main()
     cout << "Дата в формате {день месяц год/11 11 1111}: "; cin >> date.day >> date.month >> date.year;
     newTransport.date = date;
 
-    int sizeEl = list.getSize();
+    int sizeEl = list->getSize();
     for (int i = 0; i < sizeEl; i++) {
-        Transport t = list.getData();
+        Transport t = list->getData();
         if (t.date.month == month) {
-            list.AddElementToNext(new Transport(newTransport));
-            list.ToNext();
+            list->AddElementToNext(new Transport(newTransport));
+            list->ToNext();
         }
-        list.ToNext();
+        list->ToNext();
     }
 
 
-    TableCreater table(width, countHeaderLines + list.getSize());
+#pragma region UploadToFile
+    FILE* file;
+    fopen_s(&file, "data.bin", "wb");
+    fwrite(list, sizeof(MyList<Transport>), 1, file);
+    fclose(file);
+
+    delete list;
+
+
+    fopen_s(&file, "data.bin", "rb");
+    fread(list, sizeof(MyList<Transport>), 1, file);
+    fclose(file);
+
+    
+
+
+#pragma endregion
+
+
+    TableCreater table(width, countHeaderLines + list->getSize());
 
 #pragma region createHeader
 
@@ -580,7 +595,7 @@ int main()
 
 
 #pragma region addDataToTable
-    for (int i = 0; i < list.getSize(); i++) {
+    for (int i = 0; i < list->getSize(); i++) {
         TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
         TableCreater::LineData::ItemData* items = lineData->items = (TableCreater::LineData::ItemData*)calloc(3, sizeof(TableCreater::LineData::ItemData)); lineData->sizeItems = new int(3);
         stringstream ss1;
@@ -590,18 +605,18 @@ int main()
         items[0].widthItem = 5;
 
         stringstream ss2;
-        ss2 << list.node;
+        ss2 << list->node;
         items[1].data = _strdup(ss2.str().c_str());
         items[1].pos = TableCreater::Start;
         items[1].widthItem = 50;
 
         stringstream ss3;
-        ss3 << list.node->next;
+        ss3 << list->node->next;
         items[2].data = _strdup(ss3.str().c_str());
         items[2].pos = TableCreater::Start;
         items[2].widthItem = 50;
 
-        list.ToNext();
+        list->ToNext();
 
         table.setElementsToLine(i + 2, lineData);
     }
@@ -611,11 +626,11 @@ int main()
     table.Draw();
 
     table.ClearData();
-    table.CreateTable(list.getSize() + 3, 108);
+    table.CreateTable(list->getSize() + 3, 108);
 
 
     BaseAdd(&table);
-    table.UploadData(&list, 2);
+    table.UploadData(list, 2);
     BaseAddEnd(&table);
     cout << endl << endl;
     table.Draw();
