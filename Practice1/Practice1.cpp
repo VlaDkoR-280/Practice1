@@ -3,7 +3,6 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include "Practice1.h"
 using namespace std;
 
 
@@ -23,12 +22,12 @@ struct Transport {
 template <typename Data>
 class MyList {
 public:
-    
+
     struct Node {
         Node* next;
         Data* data;
-    }* node;
-    
+    }*node;
+
     MyList() {
         node = new Node;
         node->next = NULL;
@@ -53,9 +52,15 @@ public:
         free(node);
         for (int i = 1; i < _size; i++) {
             Node* buf = next->next;
-            free(next);
+            delete next;
             next = buf;
         }
+    }
+
+    Data GetDataAndToNext() {
+        Data data = *node->data;
+        node = node->next;
+        return data;
     }
 
     Data ToNext() {
@@ -145,8 +150,8 @@ public:
             char* data;
             int widthItem;
             TextPosition pos;
-        }* items;
-    }** lines;
+        }*items;
+    }**lines;
 
     /// <summary>
     /// Создание таблицы
@@ -174,9 +179,10 @@ public:
             free(lines[i]->items);
             delete (lines[i]->sizeItems);
             free(lines[i]);
-            
+
         }
         free(lines);
+        return;
     }
 
     void CreateTable(int sizeLines, int width) {
@@ -215,12 +221,12 @@ public:
     void Draw() {
         DrawBorderLine();
         for (int i = 0; i < sizeLines - 1; i++) {
-            DrawTextFields(lines[i], lines[i+1]);
+            DrawTextFields(lines[i], lines[i + 1]);
         }
         DrawTextFields(lines[sizeLines - 1]);
     }
 
-    
+
     /// <summary>
     /// Загрузка данных в таблицу
     /// </summary>
@@ -230,10 +236,10 @@ public:
     void UploadData(Transport** transports, int size, int startLineIndex = 0) {
         for (int i = startLineIndex; i < size + startLineIndex; i++) {
             Transport* transport = transports[i - startLineIndex];
-            LineData* lineData = (LineData*) calloc(1, sizeof(LineData));
+            LineData* lineData = (LineData*)calloc(1, sizeof(LineData));
             lineData->sizeItems = new int(5);
             LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData));
-            
+
 
             items[0].data = _strdup(transport->type);
             items[0].pos = Start;
@@ -242,11 +248,11 @@ public:
             items[1].data = _strdup(transport->number);
             items[1].pos = Start;
             items[1].widthItem = 16;
-            
-            
+
+
             stringstream ssLength;
             ssLength << fixed << setprecision(3) << transport->lenght;
-            
+
             items[2].data = _strdup(ssLength.str().c_str());
             items[2].pos = End;
             items[2].widthItem = 30;
@@ -263,13 +269,43 @@ public:
             setElementsToLine(i, lineData);
         }
     }
-    /*template<typename Type>
-    void UploadData(MyList<Type> list, int startIndex = 0) {
-        for (int i = startLineIndex; i < size + startLineIndex; i++) {
-            Type data = list.getData();
+
+    void UploadData(MyList<Transport>* list, int startLineIndex = 0) {
+        for (int i = startLineIndex; i < list->getSize() + startLineIndex; i++) {
+            Transport transport = list->GetDataAndToNext();
             LineData* lineData = (LineData*)calloc(1, sizeof(LineData));
+            lineData->sizeItems = new int(5);
+            LineData::ItemData* items = lineData->items = (LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(LineData::ItemData));
+
+
+            items[0].data = _strdup(transport.type);
+            items[0].pos = Start;
+            items[0].widthItem = 16;
+
+            items[1].data = _strdup(transport.number);
+            items[1].pos = Start;
+            items[1].widthItem = 16;
+
+
+            stringstream ssLength;
+            ssLength << fixed << setprecision(3) << transport.lenght;
+
+            items[2].data = _strdup(ssLength.str().c_str());
+            items[2].pos = End;
+            items[2].widthItem = 30;
+
+            items[3].data = _strdup(to_string(transport.time).c_str());
+            items[3].pos = Start;
+            items[3].widthItem = 25;
+
+            items[4].data = new char[11];
+            DateToChars(items[4].data, transport.date);
+            items[4].pos = Centre;
+            items[4].widthItem = 15;
+
+            setElementsToLine(i, lineData);
         }
-    }*/
+    }
 
 
 
@@ -287,7 +323,7 @@ private:
     void DrawChars(char ch, int length) {
         cout.width(length); cout.fill(ch); cout << ch;
     }
-    
+
     void DrawTextFields(TableCreater::LineData* lineData, TableCreater::LineData* nextLineData = NULL) {
         for (int i = 0; i < *lineData->sizeItems; i++) {
             TableCreater::LineData::ItemData item = lineData->items[i];
@@ -308,11 +344,11 @@ private:
             DrawBorderLine();
             return;
         }
-        if(*lineData->sizeItems == *nextLineData->sizeItems) DrawBorderLine(lineData);
+        if (*lineData->sizeItems == *nextLineData->sizeItems) DrawBorderLine(lineData);
         else DrawBorderLine();
-        
+
     }
-    
+
     void DrawBorderLine() {
         cout << '|';
         DrawChars('-', width - 2); cout << '|' << endl;
@@ -331,7 +367,7 @@ private:
         int startIndexText = (width - strlen(text)) / 2;
         DrawChars(' ', startIndexText);
         cout << text;
-        DrawChars(' ', width - (startIndexText + strlen(text)));    
+        DrawChars(' ', width - (startIndexText + strlen(text)));
     }
 
     void DrawOnStartText(char* text, int width) {
@@ -378,13 +414,12 @@ void BaseAddEnd(TableCreater* table) {
     lineData->sizeItems = new int(1);
     items->data = _strdup("Примечание: Тр - трамвай, Тс - троллейбус, А - автобус"); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Start;
 
-    table->setElementsToLine(5, lineData);
+    table->setElementsToLine(table->sizeLines - 1, lineData);
 }
 
 void BaseAdd2(TableCreater* table) {
     int width = table->width;
     TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
-    //TableCreater::LineData::ItemData* items = new TableCreater::LineData::ItemData;
     lineData->sizeItems = new int(5);
     TableCreater::LineData::ItemData* items = (TableCreater::LineData::ItemData*)calloc(*lineData->sizeItems, sizeof(TableCreater::LineData::ItemData));
     lineData->items = items;
@@ -405,7 +440,7 @@ void BaseAdd1(TableCreater* table, Transport** t) {
     lineData->items = items;
     items->data = _strdup("Адрес первого элемента массива newTransports"); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Centre;
     table->setElementsToLine(0, lineData);
-    
+
     lineData = (TableCreater::LineData*)calloc(2, sizeof(TableCreater::LineData));
     items = new TableCreater::LineData::ItemData;
     lineData->sizeItems = new int(1);
@@ -413,7 +448,7 @@ void BaseAdd1(TableCreater* table, Transport** t) {
     stringstream ss;
     ss << &(**t);
     items->data = _strdup(ss.str().c_str()); items->widthItem = width - 2; items->pos = TableCreater::TextPosition::Start;
-    
+
     table->setElementsToLine(1, lineData);
 
 }
@@ -435,12 +470,12 @@ int main()
     int width = 109;
     int countHeaderLines = 2;
 
-    
 
-    
+
+
 
 #pragma region createTransports 
-    Transport** transports = (Transport**) calloc(10, sizeof(Transport*));
+    Transport** transports = (Transport**)calloc(10, sizeof(Transport*));
 
     transports[0] = new Transport;
     transports[0]->type = _strdup("Тр.");
@@ -462,7 +497,7 @@ int main()
     transports[2]->lenght = 53.300f;
     transports[2]->time = 117;
     transports[2]->date.day = 4; transports[2]->date.month = 3; transports[2]->date.year = 2022;
-    
+
     for (int i = 3; i < 10; i++) {
         transports[i] = new Transport;
         transports[i]->number = new char[3];
@@ -470,7 +505,7 @@ int main()
     }
 
     Transport** newTransports = (Transport**)calloc(10, sizeof(Transport*));
-    Transport** minTime = NULL, **maxTime = NULL;
+    Transport** minTime = NULL, ** maxTime = NULL;
     for (int i = 0; i < 10; i++) {
         newTransports[i] = transports[i];
         if (i > 2) continue;
@@ -478,8 +513,8 @@ int main()
         if (minTime == NULL) minTime = &newTransports[i];
         if (maxTime == NULL) maxTime = &newTransports[i];
 
-        if((*minTime)->time > time) minTime = &newTransports[i];
-        if((*maxTime)->time < time) maxTime = &newTransports[i];
+        if ((*minTime)->time > time) minTime = &newTransports[i];
+        if ((*maxTime)->time < time) maxTime = &newTransports[i];
     }
 
     if (minTime != maxTime) {
@@ -508,7 +543,7 @@ int main()
     Date date;
     cout << "Дата в формате {день месяц год/11 11 1111}: "; cin >> date.day >> date.month >> date.year;
     newTransport.date = date;
-    
+
     int sizeEl = list.getSize();
     for (int i = 0; i < sizeEl; i++) {
         Transport t = list.getData();
@@ -519,36 +554,36 @@ int main()
         list.ToNext();
     }
 
-    
+
     TableCreater table(width, countHeaderLines + list.getSize());
-    
+
 #pragma region createHeader
 
     TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
     TableCreater::LineData::ItemData* items = lineData->items = new TableCreater::LineData::ItemData; lineData->sizeItems = new int(1);
     items->data = _strdup("Задание номер 3"); items->widthItem = 107; items->pos = TableCreater::Centre;
-    
+
     table.setElementsToLine(0, lineData);
 
     lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
-    items = lineData->items = (TableCreater::LineData::ItemData*) calloc(3, sizeof(TableCreater::LineData::ItemData)); lineData->sizeItems = new int(3);
+    items = lineData->items = (TableCreater::LineData::ItemData*)calloc(3, sizeof(TableCreater::LineData::ItemData)); lineData->sizeItems = new int(3);
     items[0].data = _strdup("i"); items[0].widthItem = 5; items[0].pos = TableCreater::Centre;
     items[1].data = _strdup("Адрес элемента"); items[1].widthItem = 50; items[1].pos = TableCreater::Start;
     items[2].data = _strdup("Адрес следущего элемента"); items[2].widthItem = 50; items[2].pos = TableCreater::Start;
-    
+
     table.setElementsToLine(1, lineData);
-    
+
 
 #pragma endregion Создание шапки для таблицы
-    
-    
-    
+
+
+
 
 #pragma region addDataToTable
     for (int i = 0; i < list.getSize(); i++) {
         TableCreater::LineData* lineData = (TableCreater::LineData*)calloc(1, sizeof(TableCreater::LineData));
         TableCreater::LineData::ItemData* items = lineData->items = (TableCreater::LineData::ItemData*)calloc(3, sizeof(TableCreater::LineData::ItemData)); lineData->sizeItems = new int(3);
-        stringstream ss1; 
+        stringstream ss1;
         ss1 << i;
         items[0].data = _strdup(ss1.str().c_str());
         items[0].pos = TableCreater::Centre;
@@ -570,11 +605,20 @@ int main()
 
         table.setElementsToLine(i + 2, lineData);
     }
-    
+
 #pragma endregion Добавление элементов из списка в таблицу по заданию
-    
+
     table.Draw();
 
+    table.ClearData();
+    table.CreateTable(list.getSize() + 3, 108);
+
+
+    BaseAdd(&table);
+    table.UploadData(&list, 2);
+    BaseAddEnd(&table);
+    cout << endl << endl;
+    table.Draw();
     ClearDataTransports(transports, 10);
     free(newTransports);
     return 0;
